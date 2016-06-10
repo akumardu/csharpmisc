@@ -22,7 +22,7 @@ namespace csharpmisc.AsyncProg
 		/// <returns>The calculated value for an option with the given 
 		/// statistical context using the Monte Carlo method.</returns>
 		///
-		public static double ComputeIntensiveSimulation(double initial = 30.0, double exercise = 21.1, double up = 1.11, double down= 12.5, double interest = 3.47, long periods = 40, long sims = 50)
+		public static double ComputeIntensiveSimulation(double initial = 30.0, double exercise = 21.1, double up = 1.11, double down= 12.5, double interest = 3.47, long periods = 40, long sims = 5000000)
         {
             Random rand = new Random();
             // Risk-neutral probabilities:

@@ -55,7 +55,12 @@
     <Compile Include="AsyncProg\AsyncTaskProgTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\csharpmisc\csharpmisc.csproj">
+      <Project>{3CF9F0E7-93BB-4268-A212-90D48315D492}</Project>
+      <Name>csharpmisc</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>
