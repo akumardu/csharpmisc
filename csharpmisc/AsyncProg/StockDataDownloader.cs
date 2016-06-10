@@ -21,7 +21,7 @@ namespace csharpmisc.AsyncProg
     // TODO: Verify exception hierarchy flattenning
     // TODO: Test WaitAllOneByOne Pattern with exception handling
     // TODO: Test parameter passing via closure and as task parameter
-    class StockDataDownloader
+    public class StockDataDownloader
     {
         /// <summary>
         /// External method for checking internet access:
@@ -112,64 +112,26 @@ namespace csharpmisc.AsyncProg
         /// <returns></returns>
         private static StockData GetDataFromInternet(string symbol, int numYearsOfHistory)
         {
-            IAsyncResult[] iars = new IAsyncResult[3];
-            WaitHandle[] handles = new WaitHandle[3];
-
             //
             // initiate web requests:
             //
             try
             {
-                iars[0] = GetDataFromYahooAsync(symbol, numYearsOfHistory);
-                iars[1] = GetDataFromNasdaqAsync(symbol, numYearsOfHistory);
-                iars[2] = GetDataFromMsnAsync(symbol, numYearsOfHistory);
-
+                var tYahoo = GetDataFromYahooAsync(symbol, numYearsOfHistory);
+                var tNasdaq = GetDataFromNasdaqAsync(symbol, numYearsOfHistory);
+                var tMsn = GetDataFromMsnAsync(symbol, numYearsOfHistory);
+                var taskList = new List<Task<StockData>>();
+                taskList.Add(tYahoo);
+                taskList.Add(tNasdaq);
+                taskList.Add(tMsn);
+                int index = Task.WaitAny(taskList.ToArray());
+                return taskList[index].Result;
             }
             catch (Exception ex)
             {
                 string msg = string.Format("Unable to initiate set of web requests ('{0}')", ex.Message);
                 throw new ApplicationException(msg);
             }
-
-            //
-            // wait for first to finish:
-            //
-            for (int i = 0; i < iars.Length; i++)
-                handles[i] = (iars[i].AsyncState as RequestState).Done;
-
-
-
-            int index = WaitHandle.WaitAny(handles, 15 * 1000 /*15 secs*/);
-
-            // 
-            // did *all* the requests timeout?
-            //
-            if (index == WaitHandle.WaitTimeout)  // if so, cancel and throw exception:
-            {
-                foreach (IAsyncResult iar in iars)
-                    (iar.AsyncState as RequestState).Request.Abort();
-
-                throw new ApplicationException("all web sites timed out");
-            }
-
-            //
-            // Otherwise we have a winning request, cancel the others:
-            //
-            IAsyncResult winner = iars[index];
-
-            foreach (IAsyncResult iar in iars)  // cancel others:
-                if (iar != winner)
-                    (iar.AsyncState as RequestState).Request.Abort();
-
-            //
-            // And return the winner's result:
-            //
-            RequestState state = winner.AsyncState as RequestState;
-
-            if (state.Exception == null)  // success!
-                return state.Result;
-            else
-                throw state.Exception;
         }
 
 
@@ -246,39 +208,45 @@ namespace csharpmisc.AsyncProg
         /// Tries to download data from Yahoo; this is an ASYNC method, caller must wait for it
         /// to complete. 
         /// </summary>
-        private static IAsyncResult GetDataFromYahooAsync(string symbol, int numYearsOfHistory)
+        private static Task<StockData> GetDataFromYahooAsync(string symbol, int numYearsOfHistory)
         {
-            System.Diagnostics.Debug.WriteLine("Yahoo initiated on thread {0}.", Thread.CurrentThread.ManagedThreadId);
+            return Task.Factory.StartNew<StockData>(() =>
+            {
+                System.Diagnostics.Debug.WriteLine("Yahoo initiated on thread {0}.", Thread.CurrentThread.ManagedThreadId);
 
-            //
-            // finance.yahoo.com, data format:
-            //
-            //   Date (YYYY-MM-DD),Open,High,Low,Close,Volume,Adj Close
-            //
-            DateTime today = DateTime.Now;
+                //
+                // finance.yahoo.com, data format:
+                //
+                //   Date (YYYY-MM-DD),Open,High,Low,Close,Volume,Adj Close
+                //
+                DateTime today = DateTime.Now;
 
-            string url = string.Format("http://ichart.finance.yahoo.com/table.csv?s={0}&d={1}&e={2}&f={3}&g=d&a={1}&b={2}&c={4}&ignore=.csv",
-                symbol,
-                today.Month - 1,
-                today.Day - 1,
-                today.Year,
-                today.Year - numYearsOfHistory);
+                string url = string.Format("http://ichart.finance.yahoo.com/table.csv?s={0}&d={1}&e={2}&f={3}&g=d&a={1}&b={2}&c={4}&ignore=.csv",
+                    symbol,
+                    today.Month - 1,
+                    today.Day - 1,
+                    today.Year,
+                    today.Year - numYearsOfHistory);
 
-            //
-            // Fire off web request:
-            //
-            HttpWebRequest WebRequestObject = (HttpWebRequest)HttpWebRequest.Create(url);
+                //
+                // Fire off web request:
+                //
+                HttpWebRequest WebRequestObject = (HttpWebRequest)HttpWebRequest.Create(url);
 
-            RequestState state = new RequestState(
-                WebRequestObject,
-                string.Format("http://finance.yahoo.com, daily Adj Close, {0} years", numYearsOfHistory),
-                new char[] { ',' },
-                6 /*Adj Close*/
-            );
+                RequestState state = new RequestState(
+                    WebRequestObject,
+                    string.Format("http://finance.yahoo.com, daily Adj Close, {0} years", numYearsOfHistory),
+                    new char[] { ',' },
+                    6 /*Adj Close*/
+                );
 
-            IAsyncResult iar = WebRequestObject.BeginGetResponse(new AsyncCallback(WebResponseCallback), state);
+                var webResponse = WebRequestObject.GetResponse();
+                List<decimal> prices = GetData(webResponse, state.Separators, state.DataIndex);
+                if (prices.Count == 0)
+                    throw new ApplicationException("site returned no data");
 
-            return iar;
+                return new StockData(state.DataSource, prices);
+            });
         }
 
 
@@ -286,32 +254,40 @@ namespace csharpmisc.AsyncProg
         /// Tries to download data from Nasdaq; this is an ASYNC method, caller must wait for it
         /// to complete.
         /// </summary>
-        private static IAsyncResult GetDataFromNasdaqAsync(string symbol, int numYearsOfHistory)
+        private static Task<StockData> GetDataFromNasdaqAsync(string symbol, int numYearsOfHistory)
         {
-            System.Diagnostics.Debug.WriteLine("Nasdaq initiated on thread {0}.", Thread.CurrentThread.ManagedThreadId);
+            return Task.Factory.StartNew<StockData>(() =>
+            {
+                System.Diagnostics.Debug.WriteLine("Nasdaq initiated on thread {0}.", Thread.CurrentThread.ManagedThreadId);
 
-            //
-            // nasdaq.com, data format:
-            //
-            //   Date (MM-DD-YYYY)\tOpen\tHigh\tLow\tClose\tVolume\t
-            //
-            string url = string.Format("http://charting.nasdaq.com/ext/charts.dll?2-1-14-0-0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0-5120-03NA000000{0}-&SF:4|5-WD=539-HT=395--XXCL-",
-                symbol);
+                //
+                // nasdaq.com, data format:
+                //
+                //   Date (MM-DD-YYYY)\tOpen\tHigh\tLow\tClose\tVolume\t
+                //
+                string url = string.Format("http://charting.nasdaq.com/ext/charts.dll?2-1-14-0-0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0-5120-03NA000000{0}-&SF:4|5-WD=539-HT=395--XXCL-",
+                    symbol);
 
-            //
-            // Fire off web request:
-            //
-            HttpWebRequest WebRequestObject = (HttpWebRequest)HttpWebRequest.Create(url);
+                //
+                // Fire off web request:
+                //
+                HttpWebRequest WebRequestObject = (HttpWebRequest)HttpWebRequest.Create(url);
 
-            RequestState state = new RequestState(
-                WebRequestObject,
-                string.Format("http://nasdaq.com, daily Close, {0} years", numYearsOfHistory),
-                new char[] { '\t' },
-                4 /*Close*/
-            );
+                RequestState state = new RequestState(
+                    WebRequestObject,
+                    string.Format("http://nasdaq.com, daily Close, {0} years", numYearsOfHistory),
+                    new char[] { '\t' },
+                    4 /*Close*/
+                );
 
-            IAsyncResult iar = WebRequestObject.BeginGetResponse(new AsyncCallback(WebResponseCallback), state);
-            return iar;
+                var webResponse = WebRequestObject.GetResponse();
+                List<decimal> prices = GetData(webResponse, state.Separators, state.DataIndex);
+                if (prices.Count == 0)
+                    throw new ApplicationException("site returned no data");
+
+                return new StockData(state.DataSource, prices);
+            });
+            
         }
 
 
@@ -321,34 +297,41 @@ namespace csharpmisc.AsyncProg
         /// 
         /// NOTE: MSN only returns 1 year of data, and weekly, so this result is not preferred.
         /// </summary>
-        private static IAsyncResult GetDataFromMsnAsync(string symbol, int numYearsOfHistory)
+        private static Task<StockData> GetDataFromMsnAsync(string symbol, int numYearsOfHistory)
         {
-            System.Diagnostics.Debug.WriteLine("MSN initiated on thread {0}.", Thread.CurrentThread.ManagedThreadId);
+            return Task.Factory.StartNew<StockData>(() =>
+            {
+                System.Diagnostics.Debug.WriteLine("MSN initiated on thread {0}.", Thread.CurrentThread.ManagedThreadId);
 
-            //
-            // MSN, data format:
-            //
-            //   Date (MM-DD-YYYY),Open,High,Low,Close,Volume
-            //
-            // NOTE: MSN only provides one year of historical data, and only by week.
-            //
-            string url = string.Format("http://moneycentral.msn.com/investor/charts/chartdl.aspx?C1=0&C2=1&height=258&width=612&CE=0&symbol={0}&filedownloadbt.x=1",
-                symbol);
+                //
+                // MSN, data format:
+                //
+                //   Date (MM-DD-YYYY),Open,High,Low,Close,Volume
+                //
+                // NOTE: MSN only provides one year of historical data, and only by week.
+                //
+                string url = string.Format("http://moneycentral.msn.com/investor/charts/chartdl.aspx?C1=0&C2=1&height=258&width=612&CE=0&symbol={0}&filedownloadbt.x=1",
+                    symbol);
 
-            //
-            // Fire off web request:
-            //
-            HttpWebRequest WebRequestObject = (HttpWebRequest)HttpWebRequest.Create(url);
+                //
+                // Fire off web request:
+                //
+                HttpWebRequest WebRequestObject = (HttpWebRequest)HttpWebRequest.Create(url);
 
-            RequestState state = new RequestState(
-                WebRequestObject,
-                "http://moneycentral.msn.com, weekly Close, 1 year",
-                new char[] { ',' },
-                4 /*Close*/
-            );
+                RequestState state = new RequestState(
+                    WebRequestObject,
+                    "http://moneycentral.msn.com, weekly Close, 1 year",
+                    new char[] { ',' },
+                    4 /*Close*/
+                );
 
-            IAsyncResult iar = WebRequestObject.BeginGetResponse(new AsyncCallback(WebResponseCallback), state);
-            return iar;
+                var webResponse = WebRequestObject.GetResponse();
+                List<decimal> prices = GetData(webResponse, state.Separators, state.DataIndex);
+                if (prices.Count == 0)
+                    throw new ApplicationException("site returned no data");
+
+                return new StockData(state.DataSource, prices);
+            });
         }
 
 
@@ -415,7 +398,7 @@ namespace csharpmisc.AsyncProg
 
     }
 
-    class StockData
+    public class StockData
     {
         public string DataSource { get; private set; }
         public List<decimal> Prices { get; private set; }

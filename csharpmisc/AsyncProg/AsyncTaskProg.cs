@@ -8,6 +8,15 @@ namespace csharpmisc.AsyncProg
 {
     public class AsyncTaskProg
     {
+        public static void FindStockInfo(string symbol)
+        {
+            
+            var stockData = StockDataDownloader.GetHistoricalData(symbol, 10);
+
+            decimal max = stockData.Prices.Max();
+            decimal min = stockData.Prices.Min();
+
+        }
 
     }
 }
