@@ -23,5 +23,12 @@ namespace csharpmisctest.AsyncProg
             Assert.IsTrue(duration.Seconds > 1);
 
         }
+
+        [TestMethod]
+        public void TestStockDataDownloaderTask()
+        {
+            var stockData = StockDataDownloader.GetHistoricalData("msft", 10);
+            Console.Write(stockData.DataSource);
+        }
     }
 }
