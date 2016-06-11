@@ -27,8 +27,8 @@ namespace csharpmisctest.AsyncProg
         [TestMethod]
         public void TestStockDataDownloaderTask()
         {
-            var stockData = StockDataDownloader.GetHistoricalData("msft", 10);
-            Console.Write(stockData.DataSource);
+            AsyncTaskProg.FindStockInfo("msft");
+            Console.WriteLine("Test");
         }
     }
 }
