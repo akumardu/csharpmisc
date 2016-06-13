@@ -11,11 +11,6 @@ namespace csharpmisc.AsyncProg
     using System.Runtime.InteropServices;
     using System.Threading;
 
-    // TODO: Convert to the Task infra
-    // TODO: Test WaitAll
-    // TODO: Test WaitAny
-    // TODO: Test WaitAllOneByOne Pattern
-    // TODO: Test ContinueWith
     // TODO: Test Exception rethrowing when task is garbage-collected
     // TODO: Test TaskUnobservedException event handler
     // TODO: Verify exception hierarchy flattenning
@@ -124,14 +119,33 @@ namespace csharpmisc.AsyncProg
                 taskList.Add(tYahoo);
                 taskList.Add(tNasdaq);
                 taskList.Add(tMsn);
-                int index = Task.WaitAny(taskList.ToArray());
-                return taskList[index].Result;
+
+                // WaitAllOneByOne
+                while(taskList.Count > 0)
+                {
+                    int index = Task.WaitAny(taskList.ToArray());
+                    if (taskList[index].Exception != null)
+                    {
+                        return taskList[index].Result;
+                    }
+
+                    taskList.RemoveAt(index);
+                }
+                
             }
-            catch (Exception ex)
+            catch (AggregateException ae)
             {
-                string msg = string.Format("Unable to initiate set of web requests ('{0}')", ex.Message);
+                string msg = "";
+                ae.Flatten();
+                foreach(Exception ex in ae.InnerExceptions)
+                {
+                    msg += string.Format("Unable to initiate set of web requests ('{0}')", ex.Message);
+                    System.Diagnostics.Debug.WriteLine(msg);
+                }
                 throw new ApplicationException(msg);
             }
+
+            return null;
         }
 
 
