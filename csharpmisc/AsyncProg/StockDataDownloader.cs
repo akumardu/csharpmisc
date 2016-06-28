@@ -110,28 +110,28 @@ namespace csharpmisc.AsyncProg
             //
             // initiate web requests:
             //
+            var taskList = new List<Task<StockData>>();
             try
             {
                 var tYahoo = GetDataFromYahooAsync(symbol, numYearsOfHistory);
                 var tNasdaq = GetDataFromNasdaqAsync(symbol, numYearsOfHistory);
                 var tMsn = GetDataFromMsnAsync(symbol, numYearsOfHistory);
-                var taskList = new List<Task<StockData>>();
+                
                 taskList.Add(tYahoo);
                 taskList.Add(tNasdaq);
                 taskList.Add(tMsn);
 
-                // WaitAllOneByOne
-                while(taskList.Count > 0)
+                while (taskList.Count > 0)
                 {
                     int index = Task.WaitAny(taskList.ToArray());
-                    if (taskList[index].Exception != null)
+                    if (taskList[index].Exception == null)
                     {
                         return taskList[index].Result;
                     }
 
                     taskList.RemoveAt(index);
                 }
-                
+
             }
             catch (AggregateException ae)
             {
@@ -142,8 +142,11 @@ namespace csharpmisc.AsyncProg
                     msg += string.Format("Unable to initiate set of web requests ('{0}')", ex.Message);
                     System.Diagnostics.Debug.WriteLine(msg);
                 }
-                throw new ApplicationException(msg);
+                //throw new ApplicationException(msg);
             }
+
+            // WaitAllOneByOne
+            
 
             return null;
         }

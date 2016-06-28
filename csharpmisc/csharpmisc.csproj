@@ -46,6 +46,8 @@
     <Compile Include="AsyncProg\AsyncTaskProg.cs" />
     <Compile Include="AsyncProg\StockDataDownloader.cs" />
     <Compile Include="AsyncProg\Utils.cs" />
+    <Compile Include="Misc\partialclass.cs" />
+    <Compile Include="Misc\partialclass.generated.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

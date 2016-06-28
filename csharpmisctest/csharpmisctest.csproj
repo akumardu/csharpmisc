@@ -53,6 +53,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="AsyncProg\AsyncTaskProgTest.cs" />
+    <Compile Include="Misc\partialclasstest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
