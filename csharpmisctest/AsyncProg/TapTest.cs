@@ -7,6 +7,8 @@ using csharpmisc.AsyncProg;
 
 namespace csharpmisctest.AsyncProg
 {
+    using System.Collections.Generic;
+
     [TestClass]
     public class TapTest
     {
@@ -135,37 +137,95 @@ namespace csharpmisctest.AsyncProg
             Assert.AreEqual(value, 2);
         }
 
+
+
         [TestMethod]
         public async Task TestProgressMethod()
         {
             CancellationTokenSource cts = new CancellationTokenSource();
             var progressReporter = new ProgressString();
             Task firstTask = null;
-            int value = 1;
             try
             {
-                firstTask = Task.Factory.StartNew((cToken) =>
+                firstTask = Task.Factory.StartNew(() =>
                 {
-                    value = 2;
-                    Debug.WriteLine("First task called");
-                    var cancellationToken = (CancellationToken)cToken;
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        // same as throw new OperationCancelledException(cancellationToken);
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-                    else
-                    {
-                        value = 3;
-                    }
-                }, cts.Token, cts.Token);
+                   progressReporter.Report("4");  
+                }, cts.Token);
 
                 await firstTask;
-
             }
             catch (Exception)
             {
 
+            }
+
+            Assert.AreEqual(progressReporter.GetProgressValue(),"4");
+        }
+
+        [TestMethod]
+        public async Task TestNeedOnlyOneDesign()
+        {
+            var cts = new CancellationTokenSource();
+            var tasks = new List<Task<int>>();
+            int value = 1;
+            tasks.Add(Task.Factory.StartNew<int>((cToken) =>
+            {
+                Task.Delay(50000, (CancellationToken)cToken).Wait((CancellationToken)cToken);
+                if (((CancellationToken)cToken).IsCancellationRequested)
+                {
+                    throw new OperationCanceledException((CancellationToken)cToken);
+                }
+                value = 2;
+                return value;
+            }, cts.Token, cts.Token));
+
+            tasks.Add(Task.Factory.StartNew<int>((cToken) =>
+            {
+                Task.Delay(50000, (CancellationToken)cToken).Wait((CancellationToken)cToken);
+                if (((CancellationToken)cToken).IsCancellationRequested)
+                {
+                    throw new OperationCanceledException((CancellationToken)cToken);
+                }
+                value = 3;
+                return value;
+            }, cts.Token, cts.Token));
+
+            tasks.Add(Task.Factory.StartNew<int>((cToken) =>
+            {
+                Task.Delay(50000, (CancellationToken)cToken).Wait((CancellationToken)cToken);
+                if (((CancellationToken)cToken).IsCancellationRequested)
+                {
+                    throw new OperationCanceledException((CancellationToken)cToken);
+                }
+                value = 4;
+                return value;
+            }, cts.Token, cts.Token));
+
+            tasks.Add(Task.Factory.StartNew<int>((cToken) =>
+            {
+                value = 5;
+                if (((CancellationToken)cToken).IsCancellationRequested)
+                {
+                    throw new OperationCanceledException((CancellationToken)cToken);
+                }
+                return value;
+            }, cts.Token, cts.Token));
+
+            var completed = await Task.WhenAny(tasks).ConfigureAwait(false);
+
+            Assert.AreEqual(completed.Result, 5);
+
+            cts.Cancel();
+
+            foreach (var task in tasks)
+            {
+                var ignored = task.ContinueWith(
+                    t =>
+                    {
+                        Debug.WriteLine(t);
+
+                    }, TaskContinuationOptions.OnlyOnFaulted
+                    );
             }
         }
     }

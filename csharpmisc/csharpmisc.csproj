@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncProg\AsyncTaskProg.cs" />
+    <Compile Include="AsyncProg\ProgressString.cs" />
     <Compile Include="AsyncProg\StockDataDownloader.cs" />
     <Compile Include="AsyncProg\Utils.cs" />
     <Compile Include="Misc\partialclass.cs" />
