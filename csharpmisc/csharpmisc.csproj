@@ -43,7 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AsyncProg\AsyncTaskProg.cs" />
+    <Compile Include="AsyncProg\AsyncPatterns.cs" />
     <Compile Include="AsyncProg\ProgressString.cs" />
     <Compile Include="AsyncProg\StockDataDownloader.cs" />
     <Compile Include="AsyncProg\Utils.cs" />

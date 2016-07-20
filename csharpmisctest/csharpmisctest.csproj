@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="AsyncProg\AsyncTaskProgTest.cs" />
     <Compile Include="AsyncProg\TapTest.cs" />
+    <Compile Include="AsyncProg\AsyncPatternsTest.cs" />
     <Compile Include="Misc\partialclasstest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

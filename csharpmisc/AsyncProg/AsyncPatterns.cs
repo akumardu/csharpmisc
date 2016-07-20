@@ -15,7 +15,7 @@ namespace csharpmisc.AsyncProg
         // to support interleaving scenario with a very large number of tasks. 
         // Ever call to WhenAny will result in a continuation being registered 
         // with each task => O(N^2) complexity.
-        static IEnumerable<Task<T>> Interleaved<T>(IEnumerable<Task<T>> tasks)
+        public static IEnumerable<Task<T>> Interleaved<T>(IEnumerable<Task<T>> tasks)
         {
             var inputTasks = tasks.ToList();
             // Creates inputTasks.Count number of TaskCompletionSources
@@ -45,6 +45,8 @@ namespace csharpmisc.AsyncProg
         static async Task UseInterleaved()
         {
             int counter = 0;
+
+            // Create some sample tasks
             IEnumerable<Task<int>> tasks = (from _ in Enumerable.Range(0, 100)
                                             select Task.Factory.StartNew<int>(() =>
                                             {
@@ -57,6 +59,7 @@ namespace csharpmisc.AsyncProg
 
             foreach (var task in interleavedTasks)
             {
+                // Access each task as they complete
                 int result = await task;
             }
         }
