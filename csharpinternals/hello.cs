@@ -4,6 +4,9 @@ class Program
 {
 	static void Main()
 	{
-		Console.WriteLine("Hello World");
+		int x = 3;
+		double y = 1.99;
+		bool b = true;
+		string str = "Hello";
 	}
 }
