@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Threading;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace csharpmisctest.AsyncProg
 {
@@ -147,5 +148,76 @@ namespace csharpmisctest.AsyncProg
                 Assert.IsTrue(listOfExceptions.InnerExceptions.First().GetType() == typeof(ArgumentException));
             }
         }
+
+        [TestMethod]
+        public void BasicPLinqAsParallelTest()
+        {
+            List<int> inputData = new List<int>() { 1, 2, 3, 4, 5 };
+
+            // AsParallel enables parallel processing of LINQ to objects query
+            foreach(var o in inputData.AsParallel().Select(i =>
+            {
+                // This will run in parallel
+                Debug.WriteLine("Select: {0}", i);
+                return i * 10;
+            }))
+            {
+                // This will start running as soon as inputs become available
+                // but this is serial
+                Debug.WriteLine("Inside Loop: {0}", o);
+            }
+        }
+
+        [TestMethod]
+        public void BasicPLinqForAllTest()
+        {
+            List<int> inputData = new List<int>() { 1, 2, 3, 4, 5 };
+
+            // ForAll operator avoids the merge and executes a delegate 
+            // for each output element
+            inputData.AsParallel().Select(i =>
+            {
+                // This will run in parallel
+                Debug.WriteLine("Select: {0}", i);
+                return i * 10;
+            }).ForAll(o =>
+            {
+                // This will run in parallel to one above
+                Debug.WriteLine("Inside Loop: {0}", o);
+            });
+        }
+
+        private static IEnumerable<int> Iterate(int from, int to, int step)
+        {
+            for(int i = from; i < to; i += step)
+            {
+                Debug.WriteLine("Thread Id: {0} for {1}", Thread.CurrentThread.ManagedThreadId, i);
+                yield return i;
+            }
+        }
+
+        [TestMethod]
+        public void ParallelForEachWithStepsTest()
+        {
+            // Parallel takes locks on enumerator
+            // If the work isn't that big, taking locks isn't worth it
+            // Other way is to do these steps manually
+            Parallel.ForEach(Iterate(0, 20, 3), i =>
+              {
+                  Debug.WriteLine("Loop: {0}", i);
+              });
+        }
+
+        [TestMethod]
+        public void ParallelForEachWithPartitionerTest()
+        {
+            // Partitioner.Create creates tuples of ranges from the values supplied
+            Parallel.ForEach(Partitioner.Create(0, 200), range =>
+             {
+                 Debug.WriteLine("{0} - {1}", range.Item1, range.Item2);
+             });
+        }
+
+        
     }
 }

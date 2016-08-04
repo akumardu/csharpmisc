@@ -137,8 +137,6 @@ namespace csharpmisctest.AsyncProg
             Assert.AreEqual(value, 2);
         }
 
-
-
         [TestMethod]
         public async Task TestProgressMethod()
         {

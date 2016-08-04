@@ -3,12 +3,14 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace csharpmisctest.AsyncProg
 {
+    using System.Collections;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
     using System.Threading.Tasks;
 
     using csharpmisc.AsyncProg;
+    using csharpmisc.Misc;
 
     [TestClass]
     public class AsyncPatternsTest
@@ -27,7 +29,7 @@ namespace csharpmisctest.AsyncProg
                                                 return counter;
                                             })).ToList();
 
-            var interleavedTasks = AsyncPatterns.Interleaved(tasks);
+            var interleavedTasks = AsyncPatterns.InterleaveTasks(tasks);
 
             foreach (var task in interleavedTasks)
             {
@@ -35,6 +37,19 @@ namespace csharpmisctest.AsyncProg
                 int result = await task;
                 Debug.WriteLine("Task Id: {0}",result);
             }
+        }
+
+        
+
+        [TestMethod]
+        public void ParallelForEachWithConsumingEnumerableTest()
+        {
+            // All the MoveNext calls should be made on the same thread
+            var enumerable = new MyEnumerable(20);
+            AsyncPatterns.ForEachWithEnumerationOnMainThread<int>(enumerable, (i) =>
+            {
+                Debug.WriteLine("Loop: {0}", i);
+            });
         }
     }
 }
