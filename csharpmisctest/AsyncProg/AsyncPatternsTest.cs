@@ -11,6 +11,9 @@ namespace csharpmisctest.AsyncProg
 
     using csharpmisc.AsyncProg;
     using csharpmisc.Misc;
+    using System.IO;
+    using System.Text.RegularExpressions;
+    using System.Threading;
 
     [TestClass]
     public class AsyncPatternsTest
@@ -39,8 +42,6 @@ namespace csharpmisctest.AsyncProg
             }
         }
 
-        
-
         [TestMethod]
         public void ParallelForEachWithConsumingEnumerableTest()
         {
@@ -50,6 +51,51 @@ namespace csharpmisctest.AsyncProg
             {
                 Debug.WriteLine("Loop: {0}", i);
             });
+        }
+
+        [TestMethod]
+        public void ProducerConsumerWithBlockingCollectionTest()
+        {
+            string inputFilePath = @"D:\\tempInput.txt", outputFilePath = @"D:\\tempOutput.txt";
+            try
+            {
+                File.Delete(inputFilePath);
+                File.Delete(outputFilePath);
+            }
+            catch(Exception)
+            { }
+            
+            for (int i = 1; i < 100000000; i*=10)
+            {
+                File.AppendAllLines(inputFilePath, new string[] { "Merhaba + " + i + " nasilsin" });
+            }
+
+            AsyncPatterns.ProcessFile(inputFilePath, outputFilePath, (line) => 
+            {
+                Debug.WriteLine("{0}-{1}",Thread.CurrentThread.ManagedThreadId, line);
+                Thread.Sleep(10 + 1000/(line.Length - 18));
+                return Regex.Replace(line, @"\s+", ", ");
+            });
+        }
+
+        [TestMethod]
+        public void MapReduceTest()
+        {
+            string dirPath = @"D:\";
+            char[] delimiters = Enumerable.Range(0, 256)
+                                .Select(i => (char)i)
+                                .Where(c => Char.IsWhiteSpace(c) || Char.IsPunctuation(c))
+                                .ToArray();
+            var files = Directory.EnumerateFiles(dirPath, "*.txt").AsParallel();
+            var counts = files.MapReduce(
+                                path => File.ReadLines(path).SelectMany(line => line.Split(delimiters)),
+                                word => word,
+                                group => new[] { new KeyValuePair<string, int>(group.Key, group.Count()) });
+            foreach(var kvp in counts)
+            {
+                Debug.WriteLine("Word: {0} Count: {1}", kvp.Key, kvp.Value);
+            }
+            
         }
     }
 }

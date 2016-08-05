@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Net.NetworkInformation;
 
 namespace csharpmisctest.AsyncProg
 {
@@ -218,6 +219,135 @@ namespace csharpmisctest.AsyncProg
              });
         }
 
-        
+        [TestMethod]
+        public void DegreeOfParallelismTest()
+        {
+            Debug.WriteLine("Processor Count: {0}", Environment.ProcessorCount);
+            int processorCount = Environment.ProcessorCount;
+
+            var addrs = new[] {"10.120.177.84", "10.120.177.85", "10.120.177.86", "10.120.177.87",
+            "10.120.177.88", "10.120.177.89", "10.120.177.90", "10.120.177.91", "10.120.177.92",
+            "10.120.177.93", "10.120.177.94", "10.120.177.95", "10.120.177.96", "10.120.177.97",
+            "10.120.177.98", "10.120.177.99", "10.120.177.100", "10.120.177.101", "10.120.177.102",
+            "10.120.177.98", "10.120.177.99", "10.120.177.100", "10.120.177.101", "10.120.177.102"};
+
+            Stopwatch clock = new Stopwatch();
+            clock.Start();
+            var pings = from addr in addrs.AsParallel()
+                        select new Ping().Send(addr);
+            clock.Stop();
+            Debug.WriteLine("Time: {0}", clock.Elapsed);
+            foreach(var ping in pings)
+            {
+                Debug.WriteLine("{0} : {1}", ping.Status, ping.Address);
+            }
+
+            clock.Reset();
+            clock.Start();
+            var pings2 = from addr in addrs.AsParallel().WithDegreeOfParallelism(20)
+                        select new Ping().Send(addr);
+            clock.Stop();
+            Debug.WriteLine("Time: {0}", clock.Elapsed);
+            foreach (var ping in pings2)
+            {
+                Debug.WriteLine("{0} : {1}", ping.Status, ping.Address);
+            }
+        }
+
+        [TestMethod]
+        public void FalseSharingTest()
+        {
+            Stopwatch clock = new Stopwatch();
+            clock.Start();
+
+            {
+                // False Sharing of rand1 and rand2 (on the same cache line in memory)
+                Random rand1 = new Random(), rand2 = new Random();
+                int[] results1 = new int[20000000], results2 = new int[20000000];
+                Parallel.Invoke(
+                () =>
+                {
+                    for (int i = 0; i < results1.Length; i++)
+                        results1[i] = rand1.Next();
+                },
+                () =>
+                {
+                    for (int i = 0; i < results2.Length; i++)
+                        results2[i] = rand2.Next();
+                });
+            }
+
+            clock.Stop();
+            Debug.WriteLine("False Sharing time: {0}", clock.Elapsed);
+
+            clock.Reset();
+            clock.Start();
+            {
+                int[] results1, results2;
+                Parallel.Invoke(
+                () => {
+                    Random rand1 = new Random();
+                    results1 = new int[20000000];
+                    for (int i = 0; i < results1.Length; i++)
+                        results1[i] = rand1.Next();
+                },
+                () => {
+                    Random rand2 = new Random();
+                    results2 = new int[20000000];
+                    for (int i = 0; i < results2.Length; i++)
+                        results2[i] = rand2.Next();
+                });
+            }
+
+            clock.Stop();
+            Debug.WriteLine("Without False Sharing time: {0}", clock.Elapsed);
+        }
+
+        [TestMethod]
+        public void ParallelForCompleteApiWithAggregationTest()
+        {
+            // We are aggregating the result of Pi here
+            long NUM_STEPS = 100;
+            double sum = 0.0;
+            double step = 1.0 / (double)NUM_STEPS;
+            object obj = new object();
+            Parallel.For(0, NUM_STEPS,
+            () => 0.0, // Initial - Gets called only once at first
+            (i, state, partial) => // Body of the main method
+            {
+                Debug.WriteLine("Thread: {0} - Iteration: {1} - Partial: {2}", Thread.CurrentThread.ManagedThreadId, i, partial);
+                double x = (i + 0.5) * step;
+                return partial + 4.0 / (1.0 + x * x);
+            },
+            partial => // Local Finally runs at the end of each tasks iterations
+            {
+                Debug.WriteLine("Thread: {0} - Partial: {1}", Thread.CurrentThread.ManagedThreadId, partial);
+                lock (obj) sum += partial;
+            });
+
+            Debug.WriteLine("PI: {0}", step * sum);
+        }
+
+        [TestMethod]
+        public void PLinqAggregationsTest()
+        {
+            long NUM_STEPS = 100;
+            double step = 1.0 / (double)NUM_STEPS;
+
+            // Partitioner.Create to create partitions
+            // AsParallel to parallelize it
+            var pi = Partitioner.Create(0, NUM_STEPS).AsParallel().Select(range =>
+            {
+                double partial = 0.0;
+                for (long i = range.Item1; i < range.Item2; i++)
+                {
+                    double x = (i + 0.5) * step;
+                    partial += 4.0 / (1.0 + x * x);
+                }
+                return partial;
+            }).Sum() * step; // Sum() functions sums over all iterations
+
+            Debug.WriteLine("PI: {0}", pi);
+        }
     }
 }
