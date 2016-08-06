@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 namespace csharpmisc.AsyncProg
 {
     using System.Collections.Concurrent;
+    using System.Diagnostics;
     using System.IO;
     using System.Threading;
 
@@ -146,5 +147,72 @@ namespace csharpmisc.AsyncProg
             .GroupBy(keySelector)
             .SelectMany(reduce);
         }
+
+
+        // Wait for all tasks in a set, unless one of them faults, in which 
+        // case you want to stop waiting as soon as the exception occurs.
+        public static Task<T[]> WhenAllOrFirstException<T>(IEnumerable<Task<T>> tasks)
+        {
+            var inputs = tasks.ToList();
+            var ce = new CountdownEvent(inputs.Count);
+            var tcs = new TaskCompletionSource<T[]>();
+            Action<Task> onCompleted = (Task completed) => 
+            {
+                if (completed.IsFaulted)
+                    tcs.TrySetException(completed.Exception.InnerExceptions);
+                if (ce.Signal() && !tcs.Task.IsCompleted)
+                    tcs.TrySetResult(inputs.Select(t => t.Result).ToArray());
+            };
+
+            foreach (var t in inputs)
+                t.ContinueWith(onCompleted);
+            return tcs.Task;
+        }
+
+
+        // Retry on Fault
+        // Function also accepts a retrywhen action which is run between retries
+        public static async Task<T> RetryOnFault<T>(
+                                                    Func<Task<T>> function, 
+                                                    int maxTries, 
+                                                    Func<Task> retryWhen)
+        {
+            for (int i = 0; i < maxTries; i++)
+            {
+                try {
+                    return await function().ConfigureAwait(false);
+                }
+                catch {
+                    if (i == maxTries - 1) throw;
+                }
+
+                await retryWhen().ConfigureAwait(false);
+            }
+            return default(T);
+        }
+
+        // Need only one
+        // common pattern of launching multiple operations, 
+        // waiting for any, and then canceling the rest.
+        public static async Task<T> NeedOnlyOne<T>(params Func<CancellationToken, Task<T>>[] functions)
+        {
+            var cts = new CancellationTokenSource();
+            var tasks = (from function in functions
+                         select function(cts.Token)).ToArray();
+            var completed = await Task.WhenAny(tasks).ConfigureAwait(false);
+            cts.Cancel();
+            foreach (var task in tasks)
+            {
+                var ignored = task.ContinueWith(
+                    t => {
+                        // Log T
+                        Debug.WriteLine(t);
+                    }, TaskContinuationOptions.OnlyOnFaulted);
+            }
+
+            return completed.Result;
+        }
+
+
     }
 }
