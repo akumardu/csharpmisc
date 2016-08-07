@@ -1,13 +1,38 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace csharpmisc.AsyncProg
 {
     public class Utils
     {
+        // Declaring this as threadstatic ensures that each thread has it's own copy of
+        // the below value
+        [ThreadStatic]
+        private static Random _rand;
+        public static int GetRandomNumber()
+        {
+            if (_rand == null)
+            {
+                _rand = new Random();
+                Debug.WriteLine("Rand: " + _rand.GetHashCode() + " Thread Id: " + Thread.CurrentThread.ManagedThreadId);
+            }
+
+            return _rand.Next();
+        }
+
+        private ThreadLocal<Random> threadLocalValue = new ThreadLocal<Random>(() => new Random());
+
+        public int GetThreadLocalRandomValue()
+        {
+            Debug.WriteLine("Rand: " + threadLocalValue.Value.GetHashCode() + " ThreadLocal: " + threadLocalValue.GetHashCode() + " Thread Id: " + Thread.CurrentThread.ManagedThreadId);
+            return threadLocalValue.Value.Next();
+        }
+
         /// <summary>
 		/// Calculates the price of an option with the given statistical info.
 		/// The algorithm used for calculation is the Monte Carlo method.

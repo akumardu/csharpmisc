@@ -7,6 +7,7 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Net.NetworkInformation;
+using csharpmisc.AsyncProg;
 
 namespace csharpmisctest.AsyncProg
 {
@@ -349,5 +350,59 @@ namespace csharpmisctest.AsyncProg
 
             Debug.WriteLine("PI: {0}", pi);
         }
+
+        [TestMethod]
+        public void ThreadStaticTest()
+        {
+            var tasks = new List<Task>();
+            tasks.Add(Task.Factory.StartNew(() =>
+            {
+                Task.Delay(1000).Wait();
+                Debug.WriteLine("Random Number: " + Utils.GetRandomNumber());
+            }));
+
+            tasks.Add(Task.Factory.StartNew(() =>
+            {
+                Task.Delay(1000).Wait();
+                Debug.WriteLine("Random Number: " + Utils.GetRandomNumber());
+            }));
+
+            tasks.Add(Task.Factory.StartNew(() =>
+            {
+                Task.Delay(1000).Wait();
+                Debug.WriteLine("Random Number: " + Utils.GetRandomNumber());
+            }));
+
+            Task.WaitAll(tasks.ToArray());
+        }
+
+        [TestMethod]
+        public void ThreadLocalTest()
+        {
+            Utils test = new Utils();
+            var tasks = new List<Task>();
+            tasks.Add(Task.Factory.StartNew(() =>
+            {
+                Debug.WriteLine("Random Number: " + test.GetThreadLocalRandomValue());
+                Task.Delay(1000).Wait();
+                Debug.WriteLine("Random Number: " + test.GetThreadLocalRandomValue());
+            }));
+
+            tasks.Add(Task.Factory.StartNew(() =>
+            {
+                Task.Delay(900).Wait();
+                Debug.WriteLine("Random Number: " + test.GetThreadLocalRandomValue());
+            }));
+
+            tasks.Add(Task.Factory.StartNew(() =>
+            {
+                Task.Delay(800).Wait();
+                Debug.WriteLine("Random Number: " + test.GetThreadLocalRandomValue());
+            }));
+
+            Task.WaitAll(tasks.ToArray());
+        }
+
+
     }
 }
