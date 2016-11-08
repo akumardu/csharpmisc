@@ -24,11 +24,11 @@ namespace samplewcfservice
             }
             if (composite.BoolValue)
             {
-                composite.StringValue += "Suffix";
+                throw new FaultException<SampleException>(new SampleException("BoolValue is good"),"BoolValue is good");
             }
             else
             {
-                throw new StatusFaultException<SampleException>(new SampleException("BoolValue"), System.Net.HttpStatusCode.BadRequest, "", new FaultCode("ClientError"));
+                throw new StatusFaultException<SampleException>(new SampleException("BoolValue is bad"), System.Net.HttpStatusCode.BadRequest, "BoolValue is bad", new FaultCode("Sender"));
             }
             return composite;
         }

@@ -14,7 +14,7 @@ namespace TestWcfService
             using (var client = new IISHostedService.Service1Client())
             {
                 int i = 0;
-                while (i < 2)
+                while (i < 1)
                 {
                     try
                     {
@@ -32,7 +32,7 @@ namespace TestWcfService
 
                     i++;
                 }
-                while (i < 5)
+                while (i < 2)
                 {
                     try
                     {

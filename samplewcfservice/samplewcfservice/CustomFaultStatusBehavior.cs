@@ -77,11 +77,11 @@ namespace samplewcfservice
             }
             catch (Exception ex)
             {
-                return;
+                Console.WriteLine("Exception caught: {0}", ex);
             }
-
+            
             // Here the response code is changed
-            reply.Properties[HttpResponseMessageProperty.Name] = new HttpResponseMessageProperty() { StatusCode = statusCode };
+            reply.Properties[HttpResponseMessageProperty.Name] = new HttpResponseMessageProperty() { StatusCode = System.Net.HttpStatusCode.BadRequest};
         }
     }
 
