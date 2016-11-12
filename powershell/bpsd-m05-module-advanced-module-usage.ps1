@@ -14,7 +14,7 @@
 
 # Here is the path to the demo folder, and the name of the module manifest
 # (update for your computer as needed)
-$modulePath = 'C:\PS\Beginning PowerShell Scripting for Developers\demo\'
+$modulePath = 'C:\Users\amdubedy\Documents\github\csharpmisc\powershell\'
 $moduleName = 'bpsd-m05-module-advanced-module-manifest'
 
 # We will import the module manifest file using the full path
@@ -65,10 +65,10 @@ $env:PSModulePath
 # Here is the path to the user folder of modules for this machine
 # (if you are running on your own computer, you'll need to update for
 # your computer)
-$userModulePath = 'C:\Users\rcain_000\Documents\WindowsPowerShell\Modules\'
+$userModulePath = 'C:\Users\amdubedy\Documents\WindowsPowerShell\Modules\'
 
 # Reminder here's the original path for the demos
-$modulePath = 'C:\PS\Beginning PowerShell Scripting for Developers\demo\'
+$modulePath = 'C:\Users\amdubedy\Documents\github\csharpmisc\powershell\'
 
 # Name of our module
 $moduleName = 'bpsd-m05-module-advanced-module'
