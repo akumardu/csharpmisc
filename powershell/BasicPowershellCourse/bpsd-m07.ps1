@@ -36,6 +36,7 @@ each object is an instance of the class = each house is a copy of the blueprint
 function Create-Object ($Schema, $Table, $Comment)
 {
   # Build a hash table with the properties
+  # [ordered] ensures that retrieval is ordered in the same way they were put in
   $properties = [ordered]@{ Schema = $Schema
                    Table = $Table
                    Comment = $Comment
@@ -413,7 +414,7 @@ $result.composeFullName($mySchema, $myTable)
 #-----------------------------------------------------------------------------#
 
 # Set the folder where the CS file is
-$assyPath = "C:\PS\Beginning PowerShell Scripting for Developers\demo\"
+$assyPath = "C:\Users\amdubedy\Documents\github\csharpmisc\powershell\BasicPowershellCourse\"
 
 # Path and File Name
 $file = "$($assyPath)bpsd-m07.cs"
@@ -466,7 +467,7 @@ $script = {
           }
 
 # Load a variable with a collection of file objects
-Set-Location "C:\PS\Beginning PowerShell Scripting for Developers\demo"
+Set-Location "C:\Users\amdubedy\Documents\github\csharpmisc\powershell\BasicPowershellCourse"
 $items = Get-ChildItem
 
 # Add script property to the each file object in bulk
@@ -523,7 +524,7 @@ foreach($item in $items)
   $mySite
   
   # Save the object to a file and 
-  $savedDataFile = 'C:\PS\Beginning PowerShell Scripting for Developers\demo\mySite.xml'
+  $savedDataFile = 'C:\Users\amdubedy\Documents\github\csharpmisc\powershell\BasicPowershellCourse\mySite.xml'
   $mySite | Export-Clixml $savedDataFile
   psedit $savedDataFile 
 

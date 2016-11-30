@@ -12,7 +12,7 @@
   written consent of the author. 
 -----------------------------------------------------------------------------#>
 
-
+Clear-Host
 Get-ExecutionPolicy
 
 #-----------------------------------------------------------------------------#
@@ -47,10 +47,10 @@ Get-ExecutionPolicy
 
 # With Restricted Policy, can't run script
 Set-ExecutionPolicy -ExecutionPolicy Restricted -Scope CurrentUser 
-. 'C:\PS\Beginning PowerShell Scripting for Developers\demo\bpsd-m06-do-something.ps1'
+. 'C:\Users\amdubedy\Documents\github\csharpmisc\powershell\BasicPowershellCourse\bpsd-m06-do-something.ps1'
 
 # With RemoteSigned we can run our script
-Set-Location 'C:\PS\Beginning PowerShell Scripting for Developers\demo\'
+Set-Location 'C:\Users\amdubedy\Documents\github\csharpmisc\powershell\BasicPowershellCourse\'
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser 
 . '.\bpsd-m06-do-something.ps1'
 
@@ -101,7 +101,7 @@ Get-ChildItem cert:\CurrentUser\My -CodeSigningCert
 
 # After creating our self signed certificate, we need a file to sign. 
 # Just copy the do something script.
-$demoPath = 'C:\PS\Beginning PowerShell Scripting for Developers\demo\'
+$demoPath = 'C:\Users\amdubedy\Documents\github\csharpmisc\powershell\BasicPowershellCourse\'
 $doSomething = "$($demoPath)bpsd-m06-do-something.ps1"
 $doSomethingSigned = "$($demoPath)bpsd-m06-do-something-signed.ps1"
 Copy-Item $doSomething $doSomethingSigned -Force
