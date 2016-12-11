@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace csharpmisc.DesignPatterns
+namespace csharpmisc.DesignPatterns.SingletonPattern
 {
     public class FullyLazySingleton
     {
