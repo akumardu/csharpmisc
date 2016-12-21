@@ -59,6 +59,7 @@
     <Compile Include="AsyncProg\ParallelForTest.cs" />
     <Compile Include="Misc\partialclasstest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Reflection\SpeedTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\csharpmisc\csharpmisc.csproj">

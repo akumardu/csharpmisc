@@ -60,6 +60,7 @@
     <Compile Include="Misc\partialclass.generated.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Reflection\SpeedTestForReflection.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
