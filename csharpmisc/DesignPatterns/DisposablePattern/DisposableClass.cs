@@ -18,6 +18,7 @@ namespace csharpmisc.DesignPatterns.DisposePattern
             GC.SuppressFinalize(this);
         }
 
+        // Prefer using SafeHandle instead of using finalize
         ~DisposableClass()
         {
             Dispose(false);

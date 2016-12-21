@@ -50,10 +50,11 @@
     <Compile Include="AsyncProg\StockDataDownloader.cs" />
     <Compile Include="AsyncProg\Tree.cs" />
     <Compile Include="AsyncProg\Utils.cs" />
-    <Compile Include="DesignPatterns\DoubleCheckLockSingleton.cs" />
-    <Compile Include="DesignPatterns\FullyLazySingleton.cs" />
-    <Compile Include="DesignPatterns\LazySingleton.cs" />
-    <Compile Include="DesignPatterns\SimpleSingleton.cs" />
+    <Compile Include="DesignPatterns\DisposablePattern\DisposableClass.cs" />
+    <Compile Include="DesignPatterns\SingletonPattern\DoubleCheckLockSingleton.cs" />
+    <Compile Include="DesignPatterns\SingletonPattern\FullyLazySingleton.cs" />
+    <Compile Include="DesignPatterns\SingletonPattern\LazySingleton.cs" />
+    <Compile Include="DesignPatterns\SingletonPattern\SimpleSingleton.cs" />
     <Compile Include="Misc\MyEnumerable.cs" />
     <Compile Include="Misc\partialclass.cs" />
     <Compile Include="Misc\partialclass.generated.cs" />
