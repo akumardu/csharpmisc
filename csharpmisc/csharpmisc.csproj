@@ -55,6 +55,7 @@
     <Compile Include="DesignPatterns\SingletonPattern\FullyLazySingleton.cs" />
     <Compile Include="DesignPatterns\SingletonPattern\LazySingleton.cs" />
     <Compile Include="DesignPatterns\SingletonPattern\SimpleSingleton.cs" />
+    <Compile Include="Dynamic\CommonMathDynamic.cs" />
     <Compile Include="Misc\MyEnumerable.cs" />
     <Compile Include="Misc\partialclass.cs" />
     <Compile Include="Misc\partialclass.generated.cs" />
