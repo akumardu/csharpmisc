@@ -14,6 +14,10 @@ namespace csharpmisctest
     using Microsoft.CSharp.RuntimeBinder;
     using Newtonsoft.Json;
 
+    using IronPython.Hosting;
+    using Microsoft.Scripting;
+    using Microsoft.Scripting.Hosting;
+
     [TestClass]
     public class DynamicTest
     {
@@ -182,6 +186,36 @@ namespace csharpmisctest
             var html = img.Render();
 
             Assert.AreEqual(html, "<img src='car.png' alt='a blue car' />");
+        }
+
+        [TestMethod]
+        public void TestBasicPythonInterop()
+        {
+            ScriptEngine engine = Python.CreateEngine();
+
+            string simpleExpression = "2+2";
+
+            dynamic dynamicResult = engine.Execute(simpleExpression);
+
+            Assert.AreEqual(dynamicResult, 4);
+        }
+
+        [TestMethod]
+        public void TestScopedPythonInterop()
+        {
+            ScriptEngine engine = Python.CreateEngine();
+            int age = 42;
+
+            ScriptScope scope = engine.CreateScope();
+            scope.SetVariable("a", age);
+
+            string expression = "1 < a < 50";
+
+            ScriptSource source = engine.CreateScriptSourceFromString(expression, SourceCodeKind.Expression);
+
+            dynamic result = source.Execute(scope);
+
+            Assert.IsTrue(result);
         }
     }
 }
