@@ -11,6 +11,8 @@ namespace csharpmisctest
     using System.Text;
 
     using csharpmisc.Dynamic;
+    using Microsoft.CSharp.RuntimeBinder;
+    using Newtonsoft.Json;
 
     [TestClass]
     public class DynamicTest
@@ -80,9 +82,106 @@ namespace csharpmisctest
             Console.WriteLine($"CommonMathDynamic basic version{CommonMathDynamic.Add(int1, int2)}");
 
             // Throws run-time error
-            // string result = CommonMathDynamic.Add(1,4) ; because it can't convert dynamic int result to string
+            // string result = CommonMathDynamic.Add(1,4); //because it can't convert dynamic int result to string
 
+            Console.WriteLine($"CommonMathDynamic basic version{CommonMathDynamicWithGenerics.Add(double1, double2)}");
+            Console.WriteLine($"CommonMathDynamic basic version{CommonMathDynamicWithGenerics.Add(int1, int2)}");
 
+            // Throws compile-time error
+            // string result = CommonMathDynamicWithGenerics.Add(1, 4); // because it can't convert dynamic int result to string
+            //short result = CommonMathDynamicWithGenericsExplicitCast.Add((short)1, (short)4); // runtime error because short is implicitly converted to int
+
+            Console.WriteLine($"CommonMathDynamic basic version{CommonMathDynamicWithGenericsExplicitCast.Add(double1, double2)}");
+            Console.WriteLine($"CommonMathDynamic basic version{CommonMathDynamicWithGenericsExplicitCast.Add(int1, int2)}");
+
+            short result = CommonMathDynamicWithGenericsExplicitCast.Add((short)1, (short)4); 
+        }
+
+        [TestMethod]
+        public void TestComInterop()
+        {
+            Type excelType = Type.GetTypeFromProgID("Excel.Application", true);
+            dynamic excel = Activator.CreateInstance(excelType);
+            excel.Visible = true;
+            excel.Workbooks.Add();
+
+            dynamic defaultWorksheet = excel.ActiveSheet;
+
+            defaultWorksheet.Cells[1, "A"] = "This is the Name column";
+            defaultWorksheet.Columns[1].AutoFit();
+        }
+
+        [TestMethod]
+        public void TestDynamicJson()
+        {
+            string customerJson = "{'FirstName': 'Parul', 'SecondName': 'Mishra'}";
+
+            dynamic c = JsonConvert.DeserializeObject(customerJson);
+            Console.WriteLine($"Customer is: {c.FirstName} {c.SecondName}");
+        }
+
+        [TestMethod]
+        public void TestShouldStoreTagName()
+        {
+            var image = new HtmlElement("img");
+
+            Assert.AreEqual("img", image.TagName);
+        }
+
+        [TestMethod]
+        public void TestShouldAddAttributeNameAndValueDynamically()
+        {
+            dynamic image = new HtmlElement("img");
+
+            image.src = "car.png";
+
+            Assert.AreEqual("car.png", image.src);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(RuntimeBinderException), "RuntimeBinderException expected")]
+        public void TestShouldErrorIfAttributeNotSet()
+        {
+            dynamic image = new HtmlElement("img");
+
+            var value = image.src;
+        }
+
+        [TestMethod]
+        public void TestShouldReturnDynamicMemberNames()
+        {
+            dynamic img = new HtmlElement("img");
+            img.src = "car.png";
+            img.alt = "a blue car";
+            string[] members = img.GetDynamicMemberNames();
+
+            Assert.AreEqual(2, members.Length);
+            Assert.AreEqual("src", members[0]);
+            Assert.AreEqual("alt", members[1]);
+        }
+
+        [TestMethod]
+        public void TestShouldOutputTagHtml()
+        {
+            dynamic img = new HtmlElement("img");
+            img.src = "car.png";
+            img.alt = "a blue car";
+
+            var html = img.ToString();
+
+            Assert.AreEqual(html, "<img src='car.png' alt='a blue car' />");
+        }
+
+        [TestMethod]
+        public void TestShouldRenderHtml()
+        {
+            dynamic img = new HtmlElement("img");
+            img.src = "car.png";
+            img.alt = "a blue car";
+
+            var html = img.Render();
+
+            Assert.AreEqual(html, "<img src='car.png' alt='a blue car' />");
         }
     }
 }
