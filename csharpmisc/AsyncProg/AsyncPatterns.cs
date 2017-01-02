@@ -212,7 +212,5 @@ namespace csharpmisc.AsyncProg
 
             return completed.Result;
         }
-
-
     }
 }
