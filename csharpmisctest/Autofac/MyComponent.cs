@@ -24,13 +24,19 @@ namespace csharpmisctest.Autofac
             Param2 = param2;
         }
 
+        public MultiConstrSameParamComponent(ISubComponent subComponent)
+        {
+            SubComponent = subComponent;
+        }
+
         public string Param1 { get; }
         public string Param2 { get; }
+        public ISubComponent SubComponent { get; }
 
         public string SomeRandomMethod1(string param1, string param2)
         {
             Console.WriteLine($"{this.GetType().Name} + {param1} + {param2}");
-            return param1 + param2;
+            return param1 + param2 + SubComponent?.RandomSubComponentMethod(param1, param2);
         }
     }
 }

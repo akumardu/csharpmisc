@@ -114,6 +114,8 @@
     <Compile Include="AsyncProg\ParallelForTest.cs" />
     <Compile Include="Autofac\AutofacTest.cs" />
     <Compile Include="Autofac\IComponent.cs" />
+    <Compile Include="Autofac\ISubComponent.cs" />
+    <Compile Include="Autofac\LoggerSubComponent.cs" />
     <Compile Include="Autofac\MyComponent.cs" />
     <Compile Include="ElasticSearch\ESImplTest.cs" />
     <Compile Include="Misc\partialclasstest.cs" />
