@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace csharpmisctest.ElasticSearch
 {
+    [Ignore]
     [TestClass]
     public class ESImplTest
     {
